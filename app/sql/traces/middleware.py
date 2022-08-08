@@ -58,6 +58,7 @@ async def trace_activity(request, response):
     trace.base_url = str(request.base_url)
     trace.client_host = str(request.client.host)
     trace.client_port = str(request.client.port)
+    trace.cookies = str(request.cookies)
 
     db.add(trace)
     db.commit()
