@@ -18,3 +18,4 @@ class Traces(Base):
     method = Column(String)
     path_params = Column(String)
     query_params = Column(String)
+    request_headers = Column(String)

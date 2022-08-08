@@ -18,7 +18,6 @@ async def trace_activity(request, response):
         return
 
     request_headers = request.headers
-    print(f'request_headers:', request_headers)
     for header in request_headers:
         print('header:', header, request_headers[header])
     request_url = request.url
@@ -54,6 +53,7 @@ async def trace_activity(request, response):
     trace.method = request.method
     trace.path_params = str(request.path_params)
     trace.query_params = str(request.query_params)
+    trace.request_headers = str(request.headers)
 
     db.add(trace)
     db.commit()
