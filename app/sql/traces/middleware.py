@@ -17,15 +17,6 @@ async def trace_activity(request, response):
     if response.status_code in excluded_status_code:
         return
 
-    request_headers = request.headers
-    for header in request_headers:
-        print('header:', header, request_headers[header])
-    request_url = request.url
-    print('url:', request_url)
-    request_components = request.url.components
-    print('url_components:', request_components)
-    request_components = request.url.query
-    print('url_components:', request_components)
     response_body = [chunk async for chunk in response.body_iterator]
     response.body_iterator = iterate_in_threadpool(iter(response_body))
     print('body:', response_body[0].decode())
@@ -54,6 +45,9 @@ async def trace_activity(request, response):
     trace.path_params = str(request.path_params)
     trace.query_params = str(request.query_params)
     trace.request_headers = str(request.headers)
+    trace.url = str(request.url)
+    trace.path = request.url.components.path
+    # TODO Store response body in database
 
     db.add(trace)
     db.commit()
