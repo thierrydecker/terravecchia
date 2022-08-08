@@ -15,3 +15,6 @@ class Traces(Base):
     client_host = Column(String)
     client_port = Column(String)
     cookies = Column(String)
+    method = Column(String)
+    path_params = Column(String)
+    query_params = Column(String)
