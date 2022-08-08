@@ -17,8 +17,6 @@ async def trace_activity(request, response):
     if response.status_code in excluded_status_code:
         return
 
-    request_cookies = request.cookies
-    print(f'request_cookies:', request_cookies)
     request_headers = request.headers
     print(f'request_headers:', request_headers)
     for header in request_headers:
