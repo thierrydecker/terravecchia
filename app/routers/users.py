@@ -146,6 +146,7 @@ def create_user(
         )
     )
     return JSONResponse(
+        status_code=201,
         content=user,
     )
 
@@ -172,6 +173,7 @@ def delete_user(
         )
     )
     return JSONResponse(
+        status_code=202,
         content=user,
     )
 
