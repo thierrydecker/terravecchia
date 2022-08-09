@@ -24,6 +24,7 @@ router = APIRouter(
 @router.get(
     path='',
     response_model=list[pm.User],
+    status_code=200,
     name='Gets users',
     description='The endpoint returns a list of users',
     responses={
@@ -73,6 +74,7 @@ def get_users(
         'Pagination-Limit': str(limit),
     }
     return JSONResponse(
+        status_code=200,
         content=users,
         headers=headers,
     )
@@ -81,6 +83,7 @@ def get_users(
 @router.get(
     path="/{user_id}",
     response_model=pm.User,
+    status_code=200,
     name='Gets one users',
     description='The endpoint returns one users',
     responses={
@@ -118,6 +121,7 @@ def get_one_user(
             }
         )
     return JSONResponse(
+        status_code=200,
         content=user,
     )
 
@@ -181,6 +185,7 @@ def delete_user(
 @router.patch(
     path='/{user_id}',
     response_model=pm.User,
+    status_code=200,
     name='Patches one user',
     description='The endpoint patches a user and returns it',
     responses={
@@ -203,5 +208,6 @@ def patch_user(
         )
     )
     return JSONResponse(
+        status_code=200,
         content=user,
     )
