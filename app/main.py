@@ -6,7 +6,7 @@ from app.exceptions.custom_exception import CustomException
 from app.routers import users
 from app.routers import root
 from app.config.urls import app_prefix
-from app.sql.traces.middleware import trace_activity
+from app.middlewares.middleware import trace_activity
 
 app = FastAPI(
     docs_url=f"{app_prefix}/docs",
