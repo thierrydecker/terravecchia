@@ -12,7 +12,6 @@ from app.sql.users import crud
 from app.sql.users import pydantic_models as pm
 from app.config.urls import app_prefix
 from app.exceptions.custom_exception import CustomException
-from app.helpers.columns import sanitise
 from app.models.custom_models import ModelError
 
 router = APIRouter(
@@ -54,11 +53,6 @@ def get_users(
     db: Session = Depends(get_db),
 ):
 
-    if columns:
-        columns = sanitise(
-            columns=columns,
-            valid_columns=pm.User.schema()['properties']
-        )
     users = jsonable_encoder(
         crud.get_users(
             db=db,
@@ -99,11 +93,7 @@ def get_one_user(
     ),
     db: Session = Depends(get_db),
 ):
-    if columns:
-        columns = sanitise(
-            columns=columns,
-            valid_columns=pm.User.schema()['properties']
-        )
+
     user = jsonable_encoder(
         crud.get_user(
             db=db,
