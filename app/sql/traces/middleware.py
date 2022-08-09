@@ -7,14 +7,13 @@ from sqlalchemy.orm import sessionmaker
 from starlette.concurrency import iterate_in_threadpool
 
 from app.config.database import sql_db_url
+from app.config.traces import excluded_status_codes
 from app.sql.traces import sqlalchemy_models as sm
-
-excluded_status_code = {}
 
 
 async def trace_activity(request, response):
 
-    if response.status_code in excluded_status_code:
+    if response.status_code in excluded_status_codes:
         return
 
     response_body = [chunk async for chunk in response.body_iterator]
