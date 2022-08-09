@@ -1,0 +1,19 @@
+{
+  "filter": {
+    "or": {
+      "first_name": "Thierry",
+      "last_name": {
+        "like": "T%"
+      }
+    },
+    "and": {
+      "equals": {
+        "first_name": "Thierry"
+      }
+    }
+  },
+  "sort": {
+    "uuid": "asc",
+    "id": "desc"
+  }
+}

@@ -34,24 +34,10 @@ import json
 from sqlalchemy import and_, or_, desc, asc
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Query
 
 from app.sql.users.sqlalchemy_models import User
 from app.config.database import sql_db_url
-
-__version__ = '0.0.1'
-
-
-def elastic_query(model, query, session=None, enabled_fields=None):
-    """ Public method for init the class ElasticQuery
-        :model: SQLAlchemy model
-        :query: valid string like a ElasticSearch
-        :session: SQLAlchemy session *optional
-        :enabled_fields: Fields allowed for make a query *optional
-    """
-    # TODO: make session to optional
-    instance = ElasticQuery(model, query, session, enabled_fields)
-    return instance.search()
-
 
 """ Valid operators """
 OPERATORS = {
@@ -177,11 +163,121 @@ class ElasticQuery(object):
         return order
 
 
-def main():
-    # query_string = '{"filter":{"or":{"first_name":"John",
-    # "last_name":"Doe"},' \
-    #               '"and":{"uuid":"19571957"}}}'
+class FiltersQuery(object):
+    """ Magic method """
 
+    def __init__(self, model, query_string, session=None, enabled_fields=None):
+        """ Initialization of the class 'ElasticQuery' """
+        self.model = model
+        self.query = query_string
+        if hasattr(model, 'query'):
+            self.model_query = model.query
+        else:
+            self.model_query = session.query(self.model)
+        self.enabled_fields = enabled_fields
+
+    def search(self):
+        """ This is the most important method """
+        try:
+            filters = json.loads(self.query)
+        except ValueError as e:
+            print(e)
+            return False
+
+        result = self.model_query
+        if 'filter' in filters.keys():
+            result = self.parse_filter(filters['filter'])
+
+        return result
+
+    def parse_filter(self, filters):
+        """ This method process the filters """
+        for filter_type in filters:
+            if filter_type == 'or' or filter_type == 'and':
+                conditions = []
+                for field in filters[filter_type]:
+                    if self.is_field_allowed(field):
+                        conditions.append(self.create_query(
+                            self.parse_field(field,
+                                             filters[filter_type][field])))
+                if filter_type == 'or':
+                    self.model_query = self.model_query.filter(or_(*conditions))
+                elif filter_type == 'and':
+                    self.model_query = self.model_query.filter(
+                        and_(*conditions))
+            else:
+                if self.is_field_allowed(filter_type):
+                    conditions = self.create_query(
+                        self.parse_field(filter_type, filters[filter_type]))
+                    self.model_query = self.model_query.filter(conditions)
+        return self.model_query
+
+    def parse_field(self, field, field_value):
+        """ Parse the operators and traduce: ES to SQLAlchemy operators """
+        if type(field_value) is dict:
+            # TODO: check operators and emit error
+            operator = list(field_value)[0]
+            if self.verify_operator(operator) is False:
+                return "Error: operator does not exist", operator
+            value = field_value[operator]
+        elif type(field_value) is str:
+            operator = 'equals'
+            value = field_value
+        return field, operator, value
+
+    @staticmethod
+    def verify_operator(operator):
+        """ Verify if the operator is valid """
+        try:
+            if hasattr(OPERATORS[operator], '__call__'):
+                return True
+            else:
+                return False
+        except ValueError:
+            return False
+
+    def is_field_allowed(self, field):
+        if self.enabled_fields:
+            return field in self.enabled_fields
+        else:
+            return True
+
+    def create_query(self, attr):
+        """ Mix all values and make the query """
+        field = attr[0]
+        operator = attr[1]
+        value = attr[2]
+        model = self.model
+
+        if '.' in field:
+            field_items = field.split('.')
+            field_name = getattr(model, field_items[0], None)
+            class_name = field_name.property.mapper.class_
+            new_model = getattr(class_name, field_items[1])
+            return field_name.has(OPERATORS[operator](new_model, value))
+
+        return OPERATORS[operator](getattr(model, field, None), value)
+
+
+def filters_query(model,
+                  query,
+                  session,
+                  enabled_fields=None
+                  ) -> Query:
+
+    """ Public method for init the class ElasticQuery
+        :model: SQLAlchemy model
+        :query: valid string like a ElasticSearch
+        :session: SQLAlchemy session *optional
+        :enabled_fields: Fields allowed for make a query *optional
+    """
+
+    # TODO: make session to optional
+    instance = FiltersQuery(model, query, session, enabled_fields)
+    return instance.search()
+
+
+def main():
     query_string = json.dumps(
         {
             "filter": {
@@ -204,21 +300,30 @@ def main():
         }
     )
 
+    print(query_string)
+
     engine = create_engine(
         sql_db_url,
     )
-    Session = sessionmaker(
+
+    session = sessionmaker(
         autocommit=False,
         autoflush=False,
         bind=engine,
     )
-    session = Session()
+
+    db = session()
+
     try:
-        msg = elastic_query(User, query_string, session)
+        msg = filters_query(
+            model=User,
+            query=query_string,
+            session=db,
+        )
         print(type(msg))
         print(msg)
     finally:
-        session.close()
+        db.close()
 
 
 if __name__ == '__main__':

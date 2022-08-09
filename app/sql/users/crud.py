@@ -1,11 +1,11 @@
 from uuid import uuid1
 
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import load_only
 
 from app.sql.users import sqlalchemy_models as sm
 from app.sql.users import pydantic_models as pm
 from app.exceptions.custom_exception import CustomException
+from app.helpers.query_builders import select
 
 
 def get_users(
@@ -16,20 +16,14 @@ def get_users(
     filters: str = None,
 ) -> list[sm.User]:
 
-    db_users = db.query(sm.User)
-    if columns:
-        if 'all' not in columns:
-            db_users = db_users.options(load_only(*columns))
-    else:
-        db_users = db_users.options(load_only(sm.User.uuid))
-
-    # TODO Apply filters
-    print('filters:', filters)
-
-    if limit != 0:
-        db_users = db_users.limit(limit)
-    if offset > 0:
-        db_users = db_users.offset(offset)
+    db_users = select(
+        db=db,
+        sm_model=sm.User,
+        pm_model=pm.User,
+        columns=columns,
+        limit=limit,
+        offset=offset,
+    )
     db_users = db_users.all()
     return db_users
 
@@ -40,12 +34,12 @@ def get_user(
     columns: list[str] = None,
 ) -> sm.User:
 
-    db_user = db.query(sm.User)
-    if columns:
-        if 'all' not in columns:
-            db_user = db_user.options(load_only(*columns))
-    else:
-        db_user = db_user.options(load_only(sm.User.uuid))
+    db_user = select(
+        db=db,
+        sm_model=sm.User,
+        pm_model=pm.User,
+        columns=columns,
+    )
     db_user = db_user.filter(sm.User.id == user_id).first()
     return db_user
 

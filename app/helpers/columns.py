@@ -27,7 +27,7 @@ def sanitise(columns: list, valid_columns: dict) -> set:
                     content={
                         'error'  : 'columns-001',
                         'message': 'Invalid column name',
-                        'detail' : f'{column} is not not valid',
+                        'detail' : f'{column} is not valid',
                     }
                 )
     return set(columns)

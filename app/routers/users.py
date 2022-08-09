@@ -12,7 +12,6 @@ from app.sql.users import crud
 from app.sql.users import pydantic_models as pm
 from app.config.urls import app_prefix
 from app.exceptions.custom_exception import CustomException
-from app.helpers.columns import sanitise
 from app.models.custom_models import ModelError
 
 router = APIRouter(
@@ -24,6 +23,7 @@ router = APIRouter(
 @router.get(
     path='',
     response_model=list[pm.User],
+    status_code=200,
     name='Gets users',
     description='The endpoint returns a list of users',
     responses={
@@ -53,11 +53,6 @@ def get_users(
     db: Session = Depends(get_db),
 ):
 
-    if columns:
-        columns = sanitise(
-            columns=columns,
-            valid_columns=pm.User.schema()['properties']
-        )
     users = jsonable_encoder(
         crud.get_users(
             db=db,
@@ -73,6 +68,7 @@ def get_users(
         'Pagination-Limit': str(limit),
     }
     return JSONResponse(
+        status_code=200,
         content=users,
         headers=headers,
     )
@@ -81,6 +77,7 @@ def get_users(
 @router.get(
     path="/{user_id}",
     response_model=pm.User,
+    status_code=200,
     name='Gets one users',
     description='The endpoint returns one users',
     responses={
@@ -96,11 +93,7 @@ def get_one_user(
     ),
     db: Session = Depends(get_db),
 ):
-    if columns:
-        columns = sanitise(
-            columns=columns,
-            valid_columns=pm.User.schema()['properties']
-        )
+
     user = jsonable_encoder(
         crud.get_user(
             db=db,
@@ -118,6 +111,7 @@ def get_one_user(
             }
         )
     return JSONResponse(
+        status_code=200,
         content=user,
     )
 
@@ -146,6 +140,7 @@ def create_user(
         )
     )
     return JSONResponse(
+        status_code=201,
         content=user,
     )
 
@@ -172,6 +167,7 @@ def delete_user(
         )
     )
     return JSONResponse(
+        status_code=202,
         content=user,
     )
 
@@ -179,6 +175,7 @@ def delete_user(
 @router.patch(
     path='/{user_id}',
     response_model=pm.User,
+    status_code=200,
     name='Patches one user',
     description='The endpoint patches a user and returns it',
     responses={
@@ -201,5 +198,6 @@ def patch_user(
         )
     )
     return JSONResponse(
+        status_code=200,
         content=user,
     )
