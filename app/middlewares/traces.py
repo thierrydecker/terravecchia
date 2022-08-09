@@ -4,8 +4,6 @@ from uuid import uuid1
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from starlette.concurrency import iterate_in_threadpool
-
 from app.config.database import sql_db_url
 from app.config.traces import excluded_status_codes
 from app.sql.traces import sqlalchemy_models as sm
@@ -15,10 +13,6 @@ async def trace_activity(request, response):
 
     if response.status_code in excluded_status_codes:
         return
-
-    response_body = [chunk async for chunk in response.body_iterator]
-    response.body_iterator = iterate_in_threadpool(iter(response_body))
-    print('body:', response_body[0].decode())
 
     engine = create_engine(
         sql_db_url,
@@ -46,7 +40,6 @@ async def trace_activity(request, response):
     trace.request_headers = str(request.headers)
     trace.url = str(request.url)
     trace.path = request.url.components.path
-    # TODO Store response body in database
 
     db.add(trace)
     db.commit()
